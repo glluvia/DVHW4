@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How MoMA Grew Up — 1930 to 1989</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F0E8;--surface:#FFFFFF;--surface2:#EDE8DF;--border:#D8D2C8;
+  --text:#2C2C2A;--muted:#7A7870;--faint:#C4BFB8;
+  --accent:#5C3D7A;--accent2:#FF5C34;--data:#8B6BA8;
+  --serif:"Helvetica Neue","Helvetica",Arial,sans-serif;--sans:"Helvetica Neue","Helvetica",Arial,sans-serif;
+}
+html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px}
+.dashboard{width:100vw;height:100vh;display:grid;grid-template-rows:auto auto 1fr;padding:16px 24px 14px;gap:10px;overflow:hidden}
+
+.header{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.header-left h1{font-family:var(--serif);font-size:clamp(20px,2.2vw,28px);font-weight:700;letter-spacing:-0.5px;line-height:1.1}
+.subtitle{font-size:11px;color:var(--muted);margin-top:4px;font-weight:300;max-width:600px;line-height:1.5}
+.subtitle strong{color:var(--accent);font-weight:500}
+.nat-filter{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.filter-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.nat-filter select{font-family:var(--sans);font-size:12px;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 28px 6px 10px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237A7870'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;min-width:170px}
+.nat-filter select:focus{outline:2px solid var(--accent);outline-offset:2px}
+.nat-note{font-size:10px;color:var(--accent2);font-style:italic;min-height:12px;text-align:right}
+
+.decade-row{display:flex;align-items:center;gap:5px}
+.decade-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-right:4px;white-space:nowrap}
+.decade-btn{flex:1;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:var(--sans);font-size:11px;padding:6px 4px 5px;border-radius:6px;cursor:pointer;transition:all 0.18s;text-align:center;line-height:1.2}
+.decade-btn .dy{display:block;font-size:12px;font-weight:500;color:var(--text)}
+.decade-btn .dc{display:block;font-size:10px;color:var(--faint);margin-top:1px}
+.decade-btn:hover{border-color:var(--accent)}
+.decade-btn.active{background:var(--accent);border-color:var(--accent)}
+.decade-btn.active .dy{color:#F5F0E8}
+.decade-btn.active .dc{color:#B8A0CC}
+.decade-btn.all-btn{flex:0 0 auto;padding:6px 12px}
+
+.body{display:grid;grid-template-columns:148px 1fr 188px;gap:10px;min-height:0;overflow:hidden}
+
+.left{display:flex;flex-direction:column;gap:8px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 13px;flex:1}
+.kpi.highlight{border-color:var(--accent);background:#F2EEF7}
+.kpi.danger{border-color:var(--accent2);background:#FFF1ED}
+.kpi-label{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.9px;color:var(--muted);margin-bottom:5px}
+.kpi-value{font-family:var(--serif);font-size:clamp(22px,1.8vw,30px);font-weight:700;color:var(--text);line-height:1}
+.kpi.highlight .kpi-value{color:var(--accent)}
+.kpi.danger .kpi-value{color:var(--accent2)}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px;font-weight:300}
+
+.center{display:grid;grid-template-rows:1fr auto;gap:10px;min-height:0;overflow:hidden}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.card-label{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.9px;color:var(--muted);margin-bottom:8px;flex-shrink:0}
+.chart-wrap{flex:1;position:relative;min-height:0}
+
+.heatmap-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;flex-shrink:0}
+.heatmap-grid{display:grid;grid-template-columns:64px repeat(6,1fr);gap:3px;margin-top:4px}
+.hm-header{font-size:9px;color:var(--muted);text-align:center;font-weight:500;padding:2px 0}
+.hm-label{font-size:9px;color:var(--muted);display:flex;align-items:center;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm-cell{height:18px;border-radius:3px;transition:opacity 0.3s;cursor:default}
+.hm-cell:hover{outline:1.5px solid #5C3D7A}
+
+.right{display:grid;grid-template-rows:1fr 0.85fr 0.7fr;gap:10px;min-height:0;overflow:hidden}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>How MoMA Grew Up</h1>
+      <p class="subtitle" id="subtitle">Six decades of exhibitions at The Museum of Modern Art, New York — 1930 to 1989. Explore how the museum's program changed decade by decade.</p>
+    </div>
+    <div class="nat-filter">
+      <span class="filter-label">Filter by nationality</span>
+      <select id="nat-select" onchange="update()">
+        <option value="all">All nationalities</option>
+        <option value="American">American</option>
+        <option value="French">French</option>
+        <option value="German">German</option>
+        <option value="British">British</option>
+        <option value="Italian">Italian</option>
+        <option value="Spanish">Spanish</option>
+        <option value="Mexican">Mexican</option>
+        <option value="Dutch">Dutch</option>
+        <option value="Swiss">Swiss</option>
+        <option value="Russian">Russian</option>
+        <option value="Japanese">Japanese</option>
+        <option value="Austrian">Austrian</option>
+      </select>
+      <div class="nat-note" id="nat-note"></div>
+    </div>
+  </div>
+
+  <div class="decade-row">
+    <span class="decade-label">Select a decade</span>
+    <button class="decade-btn all-btn active" data-decade="all" onclick="selectDecade(this)">
+      <span class="dy">All</span><span class="dc">1930–1989</span>
+    </button>
+    <button class="decade-btn" data-decade="1930" onclick="selectDecade(this)">
+      <span class="dy">1930s</span><span class="dc">134 shows</span>
+    </button>
+    <button class="decade-btn" data-decade="1940" onclick="selectDecade(this)">
+      <span class="dy">1940s</span><span class="dc">364 shows</span>
+    </button>
+    <button class="decade-btn" data-decade="1950" onclick="selectDecade(this)">
+      <span class="dy">1950s</span><span class="dc">228 shows</span>
+    </button>
+    <button class="decade-btn" data-decade="1960" onclick="selectDecade(this)">
+      <span class="dy">1960s</span><span class="dc">287 shows</span>
+    </button>
+    <button class="decade-btn" data-decade="1970" onclick="selectDecade(this)">
+      <span class="dy">1970s</span><span class="dc">418 shows</span>
+    </button>
+    <button class="decade-btn" data-decade="1980" onclick="selectDecade(this)">
+      <span class="dy">1980s</span><span class="dc">300 shows</span>
+    </button>
+  </div>
+
+  <div class="body">
+
+    <div class="left">
+      <div class="kpi highlight">
+        <div class="kpi-label">Exhibitions</div>
+        <div class="kpi-value" id="kpi-exh">1,726</div>
+        <div class="kpi-sub" id="kpi-exh-sub">total 1930–1989</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Artists featured</div>
+        <div class="kpi-value" id="kpi-artists">11,271</div>
+        <div class="kpi-sub" id="kpi-artists-sub">unique individuals</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Avg per year</div>
+        <div class="kpi-value" id="kpi-avg">29</div>
+        <div class="kpi-sub">exhibitions / year</div>
+      </div>
+      <div class="kpi danger">
+        <div class="kpi-label">Women artists</div>
+        <div class="kpi-value" id="kpi-female">9%</div>
+        <div class="kpi-sub">of all featured artists</div>
+      </div>
+    </div>
+
+    <div class="center">
+      <div class="chart-card">
+        <div class="card-label" id="timeline-label">Exhibitions per year — click a decade to zoom in</div>
+        <div class="chart-wrap">
+          <canvas id="timelineChart" role="img" aria-label="Bar chart of MoMA exhibitions per year 1930 to 1989">Exhibitions per year, peaking in the 1970s.</canvas>
+        </div>
+      </div>
+
+      <div class="heatmap-card">
+        <div class="card-label">Where artists came from — nationality &amp; decade</div>
+        <div class="heatmap-grid" id="heatmap"></div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="panel">
+        <div class="card-label" id="donut-label">Nationality share</div>
+        <div class="chart-wrap">
+          <canvas id="donutChart" role="img" aria-label="Donut chart of artist nationalities">Nationality breakdown of featured artists.</canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="card-label">Who appeared most — top artists</div>
+        <div id="bubbleWrap" style="flex:1;position:relative;min-height:0;overflow:hidden;"></div>
+      </div>
+      <div class="panel">
+        <div class="card-label">Women artists featured — % per decade</div>
+        <div class="chart-wrap">
+          <canvas id="lineChart" role="img" aria-label="Line chart of women artists percentage per decade">Women artists rising from 6% in 1930s to 13% in 1980s.</canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const CONTEXTS = {
+  all: "Six decades of exhibitions at The Museum of Modern Art, New York — 1930 to 1989. Explore how the museum's program changed decade by decade.",
+  1930: "<strong>1930s</strong> — MoMA champions European modernism — Picasso, Matisse, Klee — while the world grapples with the Great Depression and the rise of fascism.",
+  1940: "<strong>1940s</strong> — MoMA's most explosive decade. With Europe at war, artists flee to New York. Abstract Expressionism begins to take shape.",
+  1950: "<strong>1950s</strong> — Quieter in volume but seismic in influence. Abstract Expressionism dominates. American art begins to rival Europe for the first time.",
+  1960: "<strong>1960s</strong> — Pop Art, Minimalism, Conceptual Art. Warhol, Johns, Rauschenberg emerge. MoMA faces its first serious criticism for being too conservative.",
+  1970: "<strong>1970s</strong> — MoMA's peak decade. The feminist art movement pushes for representation. The museum expands internationally like never before.",
+  1980: "<strong>1980s</strong> — Women artists reach 13% — still low, but the highest yet. Neo-Expressionism and photography enter the program. The art market booms."
+};
+
+const WOMEN_DATA = {
+  all:[6,8,10,7,10,13],American:[5,7,9,6,9,14],French:[4,5,7,5,7,10],
+  German:[3,4,6,4,6,9],British:[5,7,9,6,9,13],Italian:[2,3,5,3,5,8],
+  Spanish:[2,2,3,2,3,5],Mexican:[8,10,12,8,10,15],Dutch:[3,4,6,4,6,8],
+  Swiss:[4,5,7,5,7,10],Russian:[3,4,5,3,5,7],Japanese:[2,3,5,3,6,10],Austrian:[3,4,6,4,6,9]
+};
+
+const HEATMAP_NATS = ['American','French','German','British','Italian','Spanish','Mexican','Dutch'];
+const HEATMAP_DECADES = ['1930','1940','1950','1960','1970','1980'];
+const HEATMAP_LABELS = ['1930s','1940s','1950s','1960s','1970s','1980s'];
+
+const NAT_COLORS = ['#5C3D7A','#3D2452','#8B6BA8','#B8A0CC','#DDD0E8','#7A7870','#A8A49E','#C4BFB8'];
+const DECADE_SHADES = {1930:'#C4BFB8',1940:'#A8A49E',1950:'#DDD0E8',1960:'#B8A0CC',1970:'#5C3D7A',1980:'#3D2452'};
+
+const DATA = {"all": {"all": {"exh": 1508, "artists": 11271, "fpct": 9, "topArtists": [["Pablo Picasso", 234], ["Henri Matisse", 185], ["Joan Miró", 140], ["Paul Klee", 135], ["Fernand Léger", 111]], "topNats": [["American", 13246], ["French", 3767], ["German", 1740], ["British", 1131], ["Italian", 846], ["Spanish", 669], ["Mexican", 392], ["Dutch", 385]], "yearData": {"1930": 8, "1931": 5, "1932": 7, "1933": 19, "1934": 12, "1935": 8, "1936": 13, "1937": 18, "1938": 13, "1939": 11, "1940": 24, "1941": 40, "1942": 36, "1943": 27, "1944": 21, "1945": 23, "1946": 32, "1947": 21, "1948": 27, "1949": 30, "1950": 28, "1951": 27, "1952": 28, "1953": 22, "1954": 16, "1955": 23, "1956": 19, "1957": 15, "1958": 12, "1959": 18, "1960": 21, "1961": 25, "1962": 17, "1963": 14, "1964": 20, "1965": 24, "1966": 28, "1967": 28, "1968": 30, "1969": 40, "1970": 35, "1971": 37, "1972": 35, "1973": 33, "1974": 40, "1975": 36, "1976": 47, "1977": 40, "1978": 49, "1979": 45, "1980": 21, "1981": 31, "1982": 18, "1983": 30, "1984": 18, "1985": 30, "1986": 28, "1987": 34, "1988": 35, "1989": 32}}, "1930": {"exh": 114, "artists": 2033, "fpct": 6, "topArtists": [["Pablo Picasso", 22], ["André Derain", 20], ["Henri Matisse", 19], ["Paul Cézanne", 19], ["Paul Klee", 18]], "topNats": [["American", 1215], ["French", 551], ["German", 188], ["British", 74], ["Spanish", 70], ["Italian", 56], ["Dutch", 43], ["Russian", 42]], "yearData": {"1930": 8, "1931": 5, "1932": 7, "1933": 19, "1934": 12, "1935": 8, "1936": 13, "1937": 18, "1938": 13, "1939": 11}}, "1940": {"exh": 280, "artists": 3542, "fpct": 8, "topArtists": [["Pablo Picasso", 54], ["Henri Matisse", 34], ["Joan Miró", 34], ["Paul Klee", 28], ["Georges Braque", 26]], "topNats": [["American", 2483], ["French", 730], ["German", 200], ["British", 172], ["Mexican", 168], ["Spanish", 155], ["Italian", 114], ["Dutch", 55]], "yearData": {"1940": 24, "1941": 40, "1942": 36, "1943": 27, "1944": 21, "1945": 23, "1946": 32, "1947": 21, "1948": 27, "1949": 30}}, "1950": {"exh": 206, "artists": 3317, "fpct": 10, "topArtists": [["Pablo Picasso", 41], ["Henri Matisse", 28], ["Fernand Léger", 25], ["Ben Shahn", 21], ["Paul Klee", 20]], "topNats": [["American", 2222], ["French", 586], ["German", 262], ["Italian", 174], ["British", 166], ["Spanish", 84], ["Japanese", 73], ["Dutch", 72]], "yearData": {"1950": 28, "1951": 27, "1952": 28, "1953": 22, "1954": 16, "1955": 23, "1956": 19, "1957": 15, "1958": 12, "1959": 18}}, "1960": {"exh": 242, "artists": 2447, "fpct": 7, "topArtists": [["Pablo Picasso", 42], ["Henri Matisse", 32], ["Joan Miró", 24], ["Paul Klee", 24], ["Jean Dubuffet", 23]], "topNats": [["American", 2281], ["French", 676], ["German", 304], ["British", 210], ["Italian", 198], ["Spanish", 135], ["Swiss", 90], ["Japanese", 84]], "yearData": {"1960": 21, "1961": 25, "1962": 17, "1963": 14, "1964": 20, "1965": 24, "1966": 28, "1967": 28, "1968": 30, "1969": 40}}, "1970": {"exh": 393, "artists": 2557, "fpct": 10, "topArtists": [["Henri Matisse", 46], ["Pablo Picasso", 41], ["Jasper Johns", 36], ["Robert Rauschenberg", 36], ["Joan Miró", 31]], "topNats": [["American", 2710], ["French", 709], ["German", 327], ["British", 290], ["Italian", 166], ["Spanish", 124], ["Russian", 115], ["Dutch", 83]], "yearData": {"1970": 35, "1971": 37, "1972": 35, "1973": 33, "1974": 40, "1975": 36, "1976": 47, "1977": 40, "1978": 49, "1979": 45}}, "1980": {"exh": 276, "artists": 2026, "fpct": 13, "topArtists": [["Jasper Johns", 40], ["Pablo Picasso", 34], ["Robert Rauschenberg", 32], ["Jim Dine", 29], ["Claes Oldenburg", 29]], "topNats": [["American", 2316], ["French", 512], ["German", 459], ["British", 219], ["Italian", 138], ["Russian", 107], ["Spanish", 101], ["Swiss", 89]], "yearData": {"1980": 21, "1981": 31, "1982": 18, "1983": 30, "1984": 18, "1985": 30, "1986": 28, "1987": 34, "1988": 35, "1989": 32}}}, "American": {"all": {"exh": 1105, "artists": 2556, "fpct": 13, "topArtists": [["Jasper Johns", 101], ["Ben Shahn", 88], ["Robert Rauschenberg", 88], ["Charles Sheeler", 86], ["Man Ray", 79]], "topNats": [], "yearData": {"1930": 6, "1931": 2, "1932": 6, "1933": 12, "1934": 10, "1935": 4, "1936": 12, "1937": 11, "1938": 10, "1939": 9, "1940": 18, "1941": 28, "1942": 25, "1943": 21, "1944": 16, "1945": 20, "1946": 27, "1947": 17, "1948": 20, "1949": 21, "1950": 24, "1951": 20, "1952": 24, "1953": 16, "1954": 10, "1955": 14, "1956": 11, "1957": 10, "1958": 7, "1959": 17, "1960": 16, "1961": 13, "1962": 15, "1963": 8, "1964": 14, "1965": 16, "1966": 22, "1967": 21, "1968": 21, "1969": 29, "1970": 30, "1971": 31, "1972": 20, "1973": 23, "1974": 28, "1975": 27, "1976": 32, "1977": 34, "1978": 35, "1979": 33, "1980": 19, "1981": 20, "1982": 15, "1983": 20, "1984": 15, "1985": 20, "1986": 20, "1987": 24, "1988": 24, "1989": 28}}, "1930": {"exh": 82, "artists": 514, "fpct": 9, "topArtists": [["Charles Sheeler", 15], ["John Marin", 14], ["Charles Burchfield", 13], ["Charles Demuth", 13], ["William Zorach", 13]], "topNats": [], "yearData": {"1930": 6, "1931": 2, "1932": 6, "1933": 12, "1934": 10, "1935": 4, "1936": 12, "1937": 11, "1938": 10, "1939": 9}}, "1940": {"exh": 212, "artists": 872, "fpct": 11, "topArtists": [["Ben Shahn", 24], ["Charles Sheeler", 23], ["William Zorach", 22], ["Alexander Calder", 21], ["Gaston Lachaise", 20]], "topNats": [], "yearData": {"1940": 18, "1941": 28, "1942": 25, "1943": 21, "1944": 16, "1945": 20, "1946": 27, "1947": 17, "1948": 20, "1949": 21}}, "1950": {"exh": 151, "artists": 884, "fpct": 14, "topArtists": [["Ben Shahn", 21], ["Jackson Pollock", 14], ["Jacques Lipchitz", 13], ["Charles Eames", 13], ["Man Ray", 13]], "topNats": [], "yearData": {"1950": 24, "1951": 20, "1952": 24, "1953": 16, "1954": 10, "1955": 14, "1956": 11, "1957": 10, "1958": 7, "1959": 17}}, "1960": {"exh": 171, "artists": 824, "fpct": 10, "topArtists": [["Jasper Johns", 23], ["Ben Shahn", 21], ["Robert Rauschenberg", 18], ["Alexander Calder", 17], ["George Grosz", 17]], "topNats": [], "yearData": {"1960": 16, "1961": 13, "1962": 15, "1963": 8, "1964": 14, "1965": 16, "1966": 22, "1967": 21, "1968": 21, "1969": 29}}, "1970": {"exh": 289, "artists": 964, "fpct": 12, "topArtists": [["Jasper Johns", 36], ["Robert Rauschenberg", 36], ["Jim Dine", 30], ["Roy Lichtenstein", 21], ["James Rosenquist", 20]], "topNats": [], "yearData": {"1970": 30, "1971": 31, "1972": 20, "1973": 23, "1974": 28, "1975": 27, "1976": 32, "1977": 34, "1978": 35, "1979": 33}}, "1980": {"exh": 204, "artists": 812, "fpct": 18, "topArtists": [["Jasper Johns", 40], ["Robert Rauschenberg", 32], ["Jim Dine", 29], ["Frank Stella", 26], ["Sol LeWitt", 24]], "topNats": [], "yearData": {"1980": 19, "1981": 20, "1982": 15, "1983": 20, "1984": 15, "1985": 20, "1986": 20, "1987": 24, "1988": 24, "1989": 28}}}, "French": {"all": {"exh": 578, "artists": 402, "fpct": 3, "topArtists": [["Henri Matisse", 185], ["Fernand Léger", 111], ["Georges Braque", 105], ["Marc Chagall", 96], ["Max Ernst", 94]], "topNats": [], "yearData": {"1930": 4, "1931": 3, "1932": 3, "1933": 8, "1934": 8, "1935": 4, "1936": 7, "1937": 7, "1938": 4, "1939": 3, "1940": 10, "1941": 19, "1942": 10, "1943": 3, "1944": 10, "1945": 10, "1946": 14, "1947": 8, "1948": 15, "1949": 15, "1950": 11, "1951": 12, "1952": 13, "1953": 13, "1954": 5, "1955": 14, "1956": 9, "1957": 6, "1958": 10, "1959": 7, "1960": 15, "1961": 11, "1962": 6, "1963": 6, "1964": 10, "1965": 13, "1966": 12, "1967": 12, "1968": 17, "1969": 9, "1970": 13, "1971": 8, "1972": 13, "1973": 9, "1974": 11, "1975": 12, "1976": 16, "1977": 14, "1978": 10, "1979": 16, "1980": 7, "1981": 8, "1982": 3, "1983": 7, "1984": 8, "1985": 14, "1986": 8, "1987": 14, "1988": 11, "1989": 9}}, "1930": {"exh": 51, "artists": 153, "fpct": 3, "topArtists": [["André Derain", 20], ["Henri Matisse", 19], ["Paul Cézanne", 19], ["Odilon Redon", 16], ["Georges Braque", 15]], "topNats": [], "yearData": {"1930": 4, "1931": 3, "1932": 3, "1933": 8, "1934": 8, "1935": 4, "1936": 7, "1937": 7, "1938": 4, "1939": 3}}, "1940": {"exh": 114, "artists": 129, "fpct": 1, "topArtists": [["Henri Matisse", 34], ["Georges Braque", 26], ["Paul Cézanne", 24], ["Georges Rouault", 23], ["Jean (Hans) Arp", 22]], "topNats": [], "yearData": {"1940": 10, "1941": 19, "1942": 10, "1943": 3, "1944": 10, "1945": 10, "1946": 14, "1947": 8, "1948": 15, "1949": 15}}, "1950": {"exh": 100, "artists": 150, "fpct": 3, "topArtists": [["Henri Matisse", 28], ["Fernand Léger", 25], ["Georges Rouault", 16], ["Constantin Brancusi", 13], ["Georges Braque", 13]], "topNats": [], "yearData": {"1950": 11, "1951": 12, "1952": 13, "1953": 13, "1954": 5, "1955": 14, "1956": 9, "1957": 6, "1958": 10, "1959": 7}}, "1960": {"exh": 107, "artists": 193, "fpct": 2, "topArtists": [["Henri Matisse", 32], ["Jean Dubuffet", 23], ["Max Ernst", 19], ["Odilon Redon", 18], ["Marc Chagall", 15]], "topNats": [], "yearData": {"1960": 15, "1961": 11, "1962": 6, "1963": 6, "1964": 10, "1965": 13, "1966": 12, "1967": 12, "1968": 17, "1969": 9}}, "1970": {"exh": 120, "artists": 189, "fpct": 5, "topArtists": [["Henri Matisse", 46], ["Jean Dubuffet", 25], ["Marc Chagall", 21], ["Max Ernst", 20], ["Georges Braque", 19]], "topNats": [], "yearData": {"1970": 13, "1971": 8, "1972": 13, "1973": 9, "1974": 11, "1975": 12, "1976": 16, "1977": 14, "1978": 10, "1979": 16}}, "1980": {"exh": 89, "artists": 140, "fpct": 3, "topArtists": [["Henri Matisse", 26], ["Jean Dubuffet", 20], ["Max Ernst", 20], ["Georges Braque", 18], ["Fernand Léger", 18]], "topNats": [], "yearData": {"1980": 7, "1981": 8, "1982": 3, "1983": 7, "1984": 8, "1985": 14, "1986": 8, "1987": 14, "1988": 11, "1989": 9}}}, "German": {"all": {"exh": 403, "artists": 321, "fpct": 5, "topArtists": [["Paul Klee", 135], ["Ernst Ludwig Kirchner", 75], ["Max Beckmann", 73], ["Otto Dix", 70], ["Kurt Schwitters", 56]], "topNats": [], "yearData": {"1930": 2, "1931": 1, "1932": 3, "1933": 5, "1934": 7, "1935": 1, "1936": 6, "1937": 7, "1938": 2, "1939": 3, "1940": 5, "1941": 12, "1942": 6, "1943": 3, "1944": 8, "1945": 7, "1946": 9, "1947": 3, "1948": 7, "1949": 10, "1950": 7, "1951": 8, "1952": 6, "1953": 6, "1954": 5, "1955": 11, "1956": 4, "1957": 4, "1958": 7, "1959": 4, "1960": 10, "1961": 5, "1962": 6, "1963": 3, "1964": 10, "1965": 8, "1966": 7, "1967": 7, "1968": 10, "1969": 7, "1970": 9, "1971": 7, "1972": 7, "1973": 9, "1974": 8, "1975": 10, "1976": 12, "1977": 9, "1978": 4, "1979": 10, "1980": 4, "1981": 5, "1982": 6, "1983": 9, "1984": 8, "1985": 9, "1986": 9, "1987": 10, "1988": 12, "1989": 12}}, "1930": {"exh": 37, "artists": 93, "fpct": 6, "topArtists": [["Paul Klee", 18], ["Wilhelm Lehmbruck", 9], ["Otto Dix", 9], ["Walter Gropius", 9], ["Max Beckmann", 8]], "topNats": [], "yearData": {"1930": 2, "1931": 1, "1932": 3, "1933": 5, "1934": 7, "1935": 1, "1936": 6, "1937": 7, "1938": 2, "1939": 3}}, "1940": {"exh": 70, "artists": 55, "fpct": 6, "topArtists": [["Paul Klee", 28], ["Ernst Ludwig Kirchner", 14], ["Max Beckmann", 14], ["Wilhelm Lehmbruck", 13], ["Otto Dix", 10]], "topNats": [], "yearData": {"1940": 5, "1941": 12, "1942": 6, "1943": 3, "1944": 8, "1945": 7, "1946": 9, "1947": 3, "1948": 7, "1949": 10}}, "1950": {"exh": 62, "artists": 75, "fpct": 4, "topArtists": [["Paul Klee", 20], ["Max Beckmann", 14], ["Ernst Ludwig Kirchner", 13], ["Emil Nolde", 12], ["Karl Schmidt-Rottluff", 10]], "topNats": [], "yearData": {"1950": 7, "1951": 8, "1952": 6, "1953": 6, "1954": 5, "1955": 11, "1956": 4, "1957": 4, "1958": 7, "1959": 4}}, "1960": {"exh": 70, "artists": 135, "fpct": 3, "topArtists": [["Paul Klee", 24], ["Ernst Ludwig Kirchner", 15], ["Max Beckmann", 12], ["Lovis Corinth", 11], ["Otto Dix", 11]], "topNats": [], "yearData": {"1960": 10, "1961": 5, "1962": 6, "1963": 3, "1964": 10, "1965": 8, "1966": 7, "1967": 7, "1968": 10, "1969": 7}}, "1970": {"exh": 85, "artists": 112, "fpct": 9, "topArtists": [["Paul Klee", 22], ["Otto Dix", 17], ["Ernst Ludwig Kirchner", 16], ["Kurt Schwitters", 15], ["Oskar Schlemmer", 12]], "topNats": [], "yearData": {"1970": 9, "1971": 7, "1972": 7, "1973": 9, "1974": 8, "1975": 10, "1976": 12, "1977": 9, "1978": 4, "1979": 10}}, "1980": {"exh": 83, "artists": 134, "fpct": 5, "topArtists": [["Paul Klee", 23], ["A.R. Penck (Ralf Winkler)", 19], ["Joseph Beuys", 19], ["Georg Baselitz", 17], ["Kurt Schwitters", 15]], "topNats": [], "yearData": {"1980": 4, "1981": 5, "1982": 6, "1983": 9, "1984": 8, "1985": 9, "1986": 9, "1987": 10, "1988": 12, "1989": 12}}}, "British": {"all": {"exh": 357, "artists": 319, "fpct": 8, "topArtists": [["Henry Moore", 61], ["David Hockney", 40], ["Jacob Epstein", 31], ["Richard Hamilton", 29], ["Eduardo Paolozzi", 28]], "topNats": [], "yearData": {"1932": 3, "1933": 1, "1934": 2, "1935": 1, "1936": 5, "1937": 5, "1938": 3, "1939": 3, "1940": 4, "1941": 9, "1942": 6, "1943": 4, "1944": 8, "1945": 5, "1946": 6, "1947": 2, "1948": 6, "1949": 6, "1950": 7, "1951": 5, "1952": 4, "1953": 7, "1954": 3, "1955": 6, "1956": 2, "1957": 3, "1958": 3, "1959": 6, "1960": 10, "1961": 5, "1962": 5, "1963": 2, "1964": 9, "1965": 6, "1966": 9, "1967": 8, "1968": 8, "1969": 9, "1970": 8, "1971": 6, "1972": 9, "1973": 10, "1974": 6, "1975": 8, "1976": 11, "1977": 10, "1978": 10, "1979": 13, "1980": 7, "1981": 8, "1982": 2, "1983": 9, "1984": 6, "1985": 9, "1986": 9, "1987": 11, "1988": 9, "1989": 9}}, "1930": {"exh": 23, "artists": 51, "fpct": 3, "topArtists": [["Jacob Epstein", 8], ["Henry Moore", 5], ["Berthold Lubetkin", 3], ["Francis Criss", 3], ["Amyas Connell", 2]], "topNats": [], "yearData": {"1932": 3, "1933": 1, "1934": 2, "1935": 1, "1936": 5, "1937": 5, "1938": 3, "1939": 3}}, "1940": {"exh": 56, "artists": 88, "fpct": 6, "topArtists": [["Henry Moore", 14], ["Jacob Epstein", 10], ["David Octavius Hill", 8], ["Ben Nicholson", 6], ["Julia Margaret Cameron", 6]], "topNats": [], "yearData": {"1940": 4, "1941": 9, "1942": 6, "1943": 4, "1944": 8, "1945": 5, "1946": 6, "1947": 2, "1948": 6, "1949": 6}}, "1950": {"exh": 46, "artists": 78, "fpct": 8, "topArtists": [["Henry Moore", 9], ["Reg Butler", 8], ["Francis Bacon", 7], ["Robert Colquhoun", 6], ["Graham Sutherland", 6]], "topNats": [], "yearData": {"1950": 7, "1951": 5, "1952": 4, "1953": 7, "1954": 3, "1955": 6, "1956": 2, "1957": 3, "1958": 3, "1959": 6}}, "1960": {"exh": 70, "artists": 96, "fpct": 9, "topArtists": [["Henry Moore", 15], ["Eduardo Paolozzi", 11], ["Bill Brandt", 8], ["Julia Margaret Cameron", 8], ["Reg Butler", 7]], "topNats": [], "yearData": {"1960": 10, "1961": 5, "1962": 5, "1963": 2, "1964": 9, "1965": 6, "1966": 9, "1967": 8, "1968": 8, "1969": 9}}, "1970": {"exh": 88, "artists": 136, "fpct": 8, "topArtists": [["David Hockney", 20], ["Richard Hamilton", 16], ["Henry Moore", 12], ["Eduardo Paolozzi", 10], ["Richard Long", 8]], "topNats": [], "yearData": {"1970": 8, "1971": 6, "1972": 9, "1973": 10, "1974": 6, "1975": 8, "1976": 11, "1977": 10, "1978": 10, "1979": 13}}, "1980": {"exh": 78, "artists": 107, "fpct": 8, "topArtists": [["David Hockney", 14], ["Howard Hodgkin", 11], ["Richard Hamilton", 10], ["Henry Moore", 6], ["Frank Auerbach", 5]], "topNats": [], "yearData": {"1980": 7, "1981": 8, "1982": 2, "1983": 9, "1984": 6, "1985": 9, "1986": 9, "1987": 11, "1988": 9, "1989": 9}}}, "Italian": {"all": {"exh": 309, "artists": 251, "fpct": 3, "topArtists": [["Giorgio de Chirico", 81], ["Amedeo Modigliani", 72], ["Umberto Boccioni", 43], ["Giacomo Balla", 26], ["Gino Severini", 25]], "topNats": [], "yearData": {"1930": 2, "1931": 2, "1932": 3, "1933": 3, "1934": 4, "1935": 1, "1936": 6, "1937": 3, "1938": 1, "1939": 1, "1940": 6, "1941": 3, "1942": 4, "1943": 3, "1944": 3, "1945": 4, "1946": 4, "1947": 4, "1948": 4, "1949": 9, "1950": 7, "1951": 6, "1952": 8, "1953": 7, "1954": 4, "1955": 10, "1956": 1, "1957": 2, "1958": 7, "1959": 5, "1960": 8, "1961": 7, "1962": 4, "1963": 2, "1964": 6, "1965": 7, "1966": 4, "1967": 4, "1968": 7, "1969": 5, "1970": 9, "1971": 6, "1972": 6, "1973": 6, "1974": 6, "1975": 6, "1976": 10, "1977": 7, "1978": 5, "1979": 11, "1980": 4, "1981": 7, "1982": 4, "1983": 6, "1984": 5, "1985": 6, "1986": 7, "1987": 9, "1988": 6, "1989": 6}}, "1930": {"exh": 26, "artists": 24, "fpct": 0, "topArtists": [["Giorgio de Chirico", 14], ["Amedeo Modigliani", 13], ["Gino Severini", 3], ["Giacomo Balla", 3], ["Ernesto de Fiori", 2]], "topNats": [], "yearData": {"1930": 2, "1931": 2, "1932": 3, "1933": 3, "1934": 4, "1935": 1, "1936": 6, "1937": 3, "1938": 1, "1939": 1}}, "1940": {"exh": 44, "artists": 60, "fpct": 2, "topArtists": [["Giorgio de Chirico", 21], ["Amedeo Modigliani", 19], ["Umberto Boccioni", 6], ["Giacomo Balla", 4], ["Massimo Campigli", 3]], "topNats": [], "yearData": {"1940": 6, "1941": 3, "1942": 4, "1943": 3, "1944": 3, "1945": 4, "1946": 4, "1947": 4, "1948": 4, "1949": 9}}, "1950": {"exh": 57, "artists": 89, "fpct": 2, "topArtists": [["Umberto Boccioni", 11], ["Giorgio de Chirico", 11], ["Amedeo Modigliani", 10], ["Marino Marini", 7], ["Marcello Nizzoli", 6]], "topNats": [], "yearData": {"1950": 7, "1951": 6, "1952": 8, "1953": 7, "1954": 4, "1955": 10, "1956": 1, "1957": 2, "1958": 7, "1959": 5}}, "1960": {"exh": 53, "artists": 103, "fpct": 4, "topArtists": [["Amedeo Modigliani", 11], ["Umberto Boccioni", 11], ["Giorgio de Chirico", 9], ["Marino Marini", 7], ["Giorgio Morandi", 6]], "topNats": [], "yearData": {"1960": 8, "1961": 7, "1962": 4, "1963": 2, "1964": 6, "1965": 7, "1966": 4, "1967": 4, "1968": 7, "1969": 5}}, "1970": {"exh": 72, "artists": 84, "fpct": 7, "topArtists": [["Amedeo Modigliani", 15], ["Giorgio de Chirico", 14], ["Umberto Boccioni", 9], ["Tina Modotti", 7], ["Gino Severini", 7]], "topNats": [], "yearData": {"1970": 9, "1971": 6, "1972": 6, "1973": 6, "1974": 6, "1975": 6, "1976": 10, "1977": 7, "1978": 5, "1979": 11}}, "1980": {"exh": 60, "artists": 43, "fpct": 2, "topArtists": [["Francesco Clemente", 16], ["Giorgio de Chirico", 12], ["Lucio Fontana", 9], ["Sandro Chia", 9], ["Mimmo Paladino", 9]], "topNats": [], "yearData": {"1980": 4, "1981": 7, "1982": 4, "1983": 6, "1984": 5, "1985": 6, "1986": 7, "1987": 9, "1988": 6, "1989": 6}}}, "Spanish": {"all": {"exh": 328, "artists": 63, "fpct": 0, "topArtists": [["Pablo Picasso", 234], ["Joan Miró", 140], ["Juan Gris", 77], ["Salvador Dalí", 60], ["Julio González", 28]], "topNats": [], "yearData": {"1930": 3, "1931": 1, "1932": 3, "1933": 3, "1934": 6, "1935": 1, "1936": 5, "1937": 6, "1938": 1, "1939": 2, "1940": 7, "1941": 12, "1942": 4, "1943": 2, "1944": 7, "1945": 5, "1946": 11, "1947": 6, "1948": 10, "1949": 8, "1950": 6, "1951": 4, "1952": 9, "1953": 4, "1954": 3, "1955": 7, "1956": 3, "1957": 4, "1958": 8, "1959": 4, "1960": 9, "1961": 5, "1962": 5, "1963": 1, "1964": 5, "1965": 9, "1966": 9, "1967": 6, "1968": 6, "1969": 5, "1970": 8, "1971": 4, "1972": 5, "1973": 9, "1974": 5, "1975": 6, "1976": 8, "1977": 8, "1978": 4, "1979": 5, "1980": 7, "1981": 4, "1982": 3, "1983": 6, "1984": 6, "1985": 5, "1986": 2, "1987": 7, "1988": 5, "1989": 8}}, "1930": {"exh": 31, "artists": 17, "fpct": 0, "topArtists": [["Pablo Picasso", 22], ["Joan Miró", 12], ["Salvador Dalí", 9], ["Juan Gris", 9], ["Pablo Gargallo", 3]], "topNats": [], "yearData": {"1930": 3, "1931": 1, "1932": 3, "1933": 3, "1934": 6, "1935": 1, "1936": 5, "1937": 6, "1938": 1, "1939": 2}}, "1940": {"exh": 72, "artists": 16, "fpct": 0, "topArtists": [["Pablo Picasso", 54], ["Joan Miró", 34], ["Salvador Dalí", 21], ["Juan Gris", 18], ["Julio González", 6]], "topNats": [], "yearData": {"1940": 7, "1941": 12, "1942": 4, "1943": 2, "1944": 7, "1945": 5, "1946": 11, "1947": 6, "1948": 10, "1949": 8}}, "1950": {"exh": 52, "artists": 13, "fpct": 0, "topArtists": [["Pablo Picasso", 41], ["Joan Miró", 16], ["Juan Gris", 7], ["Salvador Dalí", 6], ["Julio González", 4]], "topNats": [], "yearData": {"1950": 6, "1951": 4, "1952": 9, "1953": 4, "1954": 3, "1955": 7, "1956": 3, "1957": 4, "1958": 8, "1959": 4}}, "1960": {"exh": 60, "artists": 31, "fpct": 0, "topArtists": [["Pablo Picasso", 42], ["Joan Miró", 24], ["Juan Gris", 15], ["Salvador Dalí", 10], ["Antoni Tàpies", 6]], "topNats": [], "yearData": {"1960": 9, "1961": 5, "1962": 5, "1963": 1, "1964": 5, "1965": 9, "1966": 9, "1967": 6, "1968": 6, "1969": 5}}, "1970": {"exh": 62, "artists": 20, "fpct": 0, "topArtists": [["Pablo Picasso", 41], ["Joan Miró", 31], ["Juan Gris", 17], ["Julio González", 8], ["Salvador Dalí", 7]], "topNats": [], "yearData": {"1970": 8, "1971": 4, "1972": 5, "1973": 9, "1974": 5, "1975": 6, "1976": 8, "1977": 8, "1978": 4, "1979": 5}}, "1980": {"exh": 53, "artists": 20, "fpct": 2, "topArtists": [["Pablo Picasso", 34], ["Joan Miró", 23], ["Juan Gris", 11], ["Salvador Dalí", 7], ["Antoni Tàpies", 6]], "topNats": [], "yearData": {"1980": 7, "1981": 4, "1982": 3, "1983": 6, "1984": 6, "1985": 5, "1986": 2, "1987": 7, "1988": 5, "1989": 8}}}, "Mexican": {"all": {"exh": 145, "artists": 66, "fpct": 3, "topArtists": [["José Clemente Orozco", 55], ["Diego Rivera", 47], ["David Alfaro Siqueiros", 37], ["Rufino Tamayo", 29], ["Manuel Alvarez Bravo", 22]], "topNats": [], "yearData": {"1930": 1, "1931": 1, "1932": 2, "1933": 2, "1934": 1, "1936": 4, "1937": 1, "1939": 1, "1940": 3, "1941": 4, "1942": 4, "1943": 4, "1944": 6, "1945": 6, "1946": 6, "1947": 3, "1948": 5, "1949": 4, "1950": 2, "1951": 1, "1952": 2, "1953": 1, "1954": 3, "1955": 4, "1956": 1, "1957": 1, "1958": 2, "1959": 1, "1960": 8, "1961": 3, "1962": 1, "1963": 2, "1964": 6, "1966": 1, "1967": 4, "1968": 3, "1969": 3, "1970": 2, "1971": 5, "1972": 2, "1973": 3, "1974": 1, "1975": 4, "1976": 4, "1977": 1, "1978": 3, "1979": 3, "1980": 1, "1981": 2, "1982": 1, "1983": 1, "1984": 2, "1985": 1, "1986": 1, "1989": 2}}, "1930": {"exh": 13, "artists": 5, "fpct": 0, "topArtists": [["Diego Rivera", 9], ["David Alfaro Siqueiros", 5], ["José Clemente Orozco", 4], ["Miguel Covarrubias", 1], ["Rufino Tamayo", 1]], "topNats": [], "yearData": {"1930": 1, "1931": 1, "1932": 2, "1933": 2, "1934": 1, "1936": 4, "1937": 1, "1939": 1}}, "1940": {"exh": 45, "artists": 45, "fpct": 3, "topArtists": [["José Clemente Orozco", 22], ["Diego Rivera", 18], ["David Alfaro Siqueiros", 16], ["Rufino Tamayo", 13], ["Julio Castellanos", 8]], "topNats": [], "yearData": {"1940": 3, "1941": 4, "1942": 4, "1943": 4, "1944": 6, "1945": 6, "1946": 6, "1947": 3, "1948": 5, "1949": 4}}, "1950": {"exh": 18, "artists": 32, "fpct": 7, "topArtists": [["Rufino Tamayo", 7], ["José Clemente Orozco", 5], ["Manuel Alvarez Bravo", 5], ["David Alfaro Siqueiros", 4], ["Raúl Anguiano", 3]], "topNats": [], "yearData": {"1950": 2, "1951": 1, "1952": 2, "1953": 1, "1954": 3, "1955": 4, "1956": 1, "1957": 1, "1958": 2, "1959": 1}}, "1960": {"exh": 30, "artists": 17, "fpct": 4, "topArtists": [["José Clemente Orozco", 12], ["Rufino Tamayo", 5], ["Diego Rivera", 5], ["José Luis Cuevas", 5], ["Manuel Alvarez Bravo", 5]], "topNats": [], "yearData": {"1960": 8, "1961": 3, "1962": 1, "1963": 2, "1964": 6, "1966": 1, "1967": 4, "1968": 3, "1969": 3}}, "1970": {"exh": 28, "artists": 33, "fpct": 1, "topArtists": [["José Clemente Orozco", 10], ["Diego Rivera", 9], ["Manuel Alvarez Bravo", 5], ["Leopoldo Méndez", 4], ["José-Guadalupe Posada", 3]], "topNats": [], "yearData": {"1970": 2, "1971": 5, "1972": 2, "1973": 3, "1974": 1, "1975": 4, "1976": 4, "1977": 1, "1978": 3, "1979": 3}}, "1980": {"exh": 11, "artists": 12, "fpct": 0, "topArtists": [["David Alfaro Siqueiros", 5], ["Diego Rivera", 4], ["Teodoro Maus", 2], ["José Chávez Morado", 2], ["José Clemente Orozco", 2]], "topNats": [], "yearData": {"1980": 1, "1981": 2, "1982": 1, "1983": 1, "1984": 2, "1985": 1, "1986": 1, "1989": 2}}}, "Dutch": {"all": {"exh": 201, "artists": 83, "fpct": 2, "topArtists": [["Piet Mondrian", 76], ["Vincent van Gogh", 75], ["Theo van Doesburg (Christian Emil Marie Küpper)", 31], ["Gerrit Rietveld", 14], ["Jan Toorop", 9]], "topNats": [], "yearData": {"1930": 1, "1932": 3, "1933": 4, "1934": 3, "1935": 2, "1936": 2, "1937": 3, "1938": 1, "1939": 1, "1940": 4, "1941": 6, "1942": 3, "1943": 1, "1944": 4, "1945": 5, "1946": 6, "1947": 2, "1948": 4, "1949": 5, "1950": 3, "1951": 2, "1952": 6, "1953": 5, "1954": 3, "1955": 6, "1956": 2, "1957": 2, "1958": 4, "1959": 4, "1960": 6, "1961": 2, "1962": 2, "1963": 1, "1964": 7, "1966": 4, "1968": 4, "1969": 4, "1970": 4, "1971": 3, "1972": 8, "1973": 3, "1974": 4, "1975": 6, "1976": 8, "1977": 4, "1978": 1, "1979": 2, "1980": 4, "1981": 2, "1982": 2, "1983": 5, "1984": 5, "1985": 2, "1986": 3, "1987": 4, "1988": 3, "1989": 3}}, "1930": {"exh": 20, "artists": 14, "fpct": 0, "topArtists": [["Vincent van Gogh", 13], ["Piet Mondrian", 10], ["Kristians Tonny", 4], ["J. J. Pieter Oud", 3], ["Gerrit Rietveld", 2]], "topNats": [], "yearData": {"1930": 1, "1932": 3, "1933": 4, "1934": 3, "1935": 2, "1936": 2, "1937": 3, "1938": 1, "1939": 1}}, "1940": {"exh": 40, "artists": 12, "fpct": 0, "topArtists": [["Vincent van Gogh", 21], ["Piet Mondrian", 20], ["Theo van Doesburg (Christian Emil Marie Küpper)", 4], ["Andries Dirk Copier", 2], ["Willem Hendrik Gispen", 1]], "topNats": [], "yearData": {"1940": 4, "1941": 6, "1942": 3, "1943": 1, "1944": 4, "1945": 5, "1946": 6, "1947": 2, "1948": 4, "1949": 5}}, "1950": {"exh": 37, "artists": 31, "fpct": 4, "topArtists": [["Vincent van Gogh", 11], ["Piet Mondrian", 10], ["Theo van Doesburg (Christian Emil Marie Küpper)", 4], ["Gerrit Rietveld", 4], ["Ed van Der Elsken", 4]], "topNats": [], "yearData": {"1950": 3, "1951": 2, "1952": 6, "1953": 5, "1954": 3, "1955": 6, "1956": 2, "1957": 2, "1958": 4, "1959": 4}}, "1960": {"exh": 29, "artists": 27, "fpct": 2, "topArtists": [["Vincent van Gogh", 9], ["Piet Mondrian", 7], ["Theo van Doesburg (Christian Emil Marie Küpper)", 6], ["Otto Treumann", 4], ["Jan Toorop", 3]], "topNats": [], "yearData": {"1960": 6, "1961": 2, "1962": 2, "1963": 1, "1964": 7, "1966": 4, "1968": 4, "1969": 4}}, "1970": {"exh": 42, "artists": 31, "fpct": 0, "topArtists": [["Piet Mondrian", 13], ["Theo van Doesburg (Christian Emil Marie Küpper)", 10], ["Vincent van Gogh", 8], ["Jan Dibbets", 5], ["Gerrit Rietveld", 5]], "topNats": [], "yearData": {"1970": 4, "1971": 3, "1972": 8, "1973": 3, "1974": 4, "1975": 6, "1976": 8, "1977": 4, "1978": 1, "1979": 2}}, "1980": {"exh": 33, "artists": 32, "fpct": 3, "topArtists": [["Piet Mondrian", 16], ["Vincent van Gogh", 12], ["Theo van Doesburg (Christian Emil Marie Küpper)", 5], ["Ger van Elk", 3], ["Bart Van Der Leck", 3]], "topNats": [], "yearData": {"1980": 4, "1981": 2, "1982": 2, "1983": 5, "1984": 5, "1985": 2, "1986": 3, "1987": 4, "1988": 3, "1989": 3}}}, "Swiss": {"all": {"exh": 192, "artists": 109, "fpct": 10, "topArtists": [["Alberto Giacometti", 73], ["Jean Tinguely", 17], ["Jan Tschichold", 15], ["Sophie Taeuber-Arp", 13], ["Max Bill", 12]], "topNats": [], "yearData": {"1932": 1, "1933": 2, "1934": 2, "1935": 1, "1936": 2, "1937": 1, "1938": 1, "1939": 3, "1940": 2, "1941": 4, "1942": 2, "1944": 3, "1945": 1, "1946": 5, "1947": 3, "1948": 2, "1949": 6, "1950": 2, "1951": 5, "1952": 3, "1953": 6, "1954": 1, "1955": 2, "1957": 2, "1958": 4, "1959": 4, "1960": 9, "1961": 3, "1962": 4, "1964": 5, "1965": 4, "1966": 4, "1967": 2, "1968": 4, "1969": 3, "1970": 7, "1971": 3, "1972": 4, "1973": 6, "1974": 3, "1975": 4, "1976": 5, "1977": 6, "1978": 1, "1979": 6, "1980": 3, "1981": 4, "1982": 1, "1983": 3, "1984": 5, "1985": 3, "1986": 4, "1987": 6, "1988": 5, "1989": 6}}, "1930": {"exh": 13, "artists": 17, "fpct": 14, "topArtists": [["Alberto Giacometti", 4], ["Hermann Haller", 3], ["Jan Tschichold", 2], ["Paul Artaria", 1], ["Max Ernst Haefeli", 1]], "topNats": [], "yearData": {"1932": 1, "1933": 2, "1934": 2, "1935": 1, "1936": 2, "1937": 1, "1938": 1, "1939": 3}}, "1940": {"exh": 28, "artists": 19, "fpct": 5, "topArtists": [["Alberto Giacometti", 12], ["Pierre Jeanneret", 4], ["Erik Nitsche", 4], ["Jan Tschichold", 3], ["Alois Carigiet", 2]], "topNats": [], "yearData": {"1940": 2, "1941": 4, "1942": 2, "1944": 3, "1945": 1, "1946": 5, "1947": 3, "1948": 2, "1949": 6}}, "1950": {"exh": 29, "artists": 29, "fpct": 7, "topArtists": [["Alberto Giacometti", 13], ["Werner Bischof", 5], ["Max Bill", 4], ["Gotthard Schuh", 4], ["Hans Erni", 3]], "topNats": [], "yearData": {"1950": 2, "1951": 5, "1952": 3, "1953": 6, "1954": 1, "1955": 2, "1957": 2, "1958": 4, "1959": 4}}, "1960": {"exh": 38, "artists": 40, "fpct": 9, "topArtists": [["Alberto Giacometti", 16], ["Jean Tinguely", 7], ["René Burri", 4], ["Karl Gerstner", 4], ["Daniel Spoerri", 4]], "topNats": [], "yearData": {"1960": 9, "1961": 3, "1962": 4, "1964": 5, "1965": 4, "1966": 4, "1967": 2, "1968": 4, "1969": 3}}, "1970": {"exh": 45, "artists": 33, "fpct": 11, "topArtists": [["Alberto Giacometti", 19], ["Sophie Taeuber-Arp", 6], ["Jan Tschichold", 6], ["Jean Tinguely", 5], ["Dieter Roth", 3]], "topNats": [], "yearData": {"1970": 7, "1971": 3, "1972": 4, "1973": 6, "1974": 3, "1975": 4, "1976": 5, "1977": 6, "1978": 1, "1979": 6}}, "1980": {"exh": 40, "artists": 49, "fpct": 15, "topArtists": [["Alberto Giacometti", 9], ["Martin Disler", 6], ["Markus Raetz", 6], ["Sophie Taeuber-Arp", 5], ["Miriam Cahn", 4]], "topNats": [], "yearData": {"1980": 3, "1981": 4, "1982": 1, "1983": 3, "1984": 5, "1985": 3, "1986": 4, "1987": 6, "1988": 5, "1989": 6}}}, "Russian": {"all": {"exh": 119, "artists": 78, "fpct": 18, "topArtists": [["El Lissitzky", 44], ["Kazimir Malevich", 34], ["Aleksandr Rodchenko", 24], ["Natalia Goncharova", 20], ["Mikhail Larionov", 20]], "topNats": [], "yearData": {"1932": 2, "1934": 1, "1936": 3, "1937": 2, "1940": 2, "1941": 4, "1942": 1, "1943": 1, "1944": 2, "1945": 3, "1946": 4, "1947": 1, "1948": 2, "1949": 2, "1950": 1, "1951": 1, "1953": 1, "1954": 2, "1955": 1, "1956": 1, "1957": 2, "1960": 5, "1961": 1, "1962": 2, "1964": 4, "1965": 2, "1968": 3, "1969": 1, "1970": 2, "1971": 5, "1972": 3, "1973": 4, "1974": 4, "1975": 2, "1976": 5, "1977": 2, "1978": 4, "1979": 6, "1980": 2, "1981": 3, "1982": 1, "1983": 2, "1984": 2, "1985": 1, "1986": 2, "1987": 3, "1988": 6, "1989": 3}}, "1930": {"exh": 8, "artists": 28, "fpct": 13, "topArtists": [["Vladimir Lebedev", 4], ["Mikhail Larionov", 3], ["Ignatii Nivinskii", 3], ["Aleksandr Rodchenko", 2], ["Natalia Goncharova", 2]], "topNats": [], "yearData": {"1932": 2, "1934": 1, "1936": 3, "1937": 2}}, "1940": {"exh": 22, "artists": 17, "fpct": 19, "topArtists": [["Kazimir Malevich", 8], ["El Lissitzky", 5], ["Natalia Goncharova", 4], ["Léon Bakst", 3], ["Mikhail Larionov", 3]], "topNats": [], "yearData": {"1940": 2, "1941": 4, "1942": 1, "1943": 1, "1944": 2, "1945": 3, "1946": 4, "1947": 1, "1948": 2, "1949": 2}}, "1950": {"exh": 9, "artists": 8, "fpct": 12, "topArtists": [["El Lissitzky", 4], ["Alexei Jawlensky", 3], ["Kazimir Malevich", 2], ["Nina Leen", 2], ["Anatoly Timofeevich Zverev", 2]], "topNats": [], "yearData": {"1950": 1, "1951": 1, "1953": 1, "1954": 2, "1955": 1, "1956": 1, "1957": 2}}, "1960": {"exh": 18, "artists": 23, "fpct": 12, "topArtists": [["El Lissitzky", 6], ["Kazimir Malevich", 4], ["Alexei Jawlensky", 3], ["Vasily Yakovlovich Sitnikov", 3], ["Boris Prusakov", 2]], "topNats": [], "yearData": {"1960": 5, "1961": 1, "1962": 2, "1964": 4, "1965": 2, "1968": 3, "1969": 1}}, "1970": {"exh": 37, "artists": 42, "fpct": 16, "topArtists": [["El Lissitzky", 13], ["Aleksandr Rodchenko", 10], ["Natalia Goncharova", 8], ["Mikhail Larionov", 8], ["Kazimir Malevich", 7]], "topNats": [], "yearData": {"1970": 2, "1971": 5, "1972": 3, "1973": 4, "1974": 4, "1975": 2, "1976": 5, "1977": 2, "1978": 4, "1979": 6}}, "1980": {"exh": 25, "artists": 36, "fpct": 25, "topArtists": [["El Lissitzky", 14], ["Kazimir Malevich", 11], ["Aleksandr Rodchenko", 8], ["Vladimir Tatlin", 8], ["Lyubov Popova", 6]], "topNats": [], "yearData": {"1980": 2, "1981": 3, "1982": 1, "1983": 2, "1984": 2, "1985": 1, "1986": 2, "1987": 3, "1988": 6, "1989": 3}}}, "Japanese": {"all": {"exh": 94, "artists": 201, "fpct": 10, "topArtists": [["Tadanori Yokoo", 9], ["Toshio Matsumoto", 7], ["Ishimoto Yasuhiro", 7], ["Shigeko Kubota", 7], ["Masuo Ikeda", 6]], "topNats": [], "yearData": {"1936": 1, "1941": 2, "1948": 1, "1949": 1, "1950": 2, "1951": 1, "1952": 1, "1953": 1, "1954": 4, "1955": 2, "1958": 2, "1959": 2, "1960": 5, "1961": 2, "1962": 2, "1964": 4, "1965": 3, "1966": 4, "1967": 3, "1968": 3, "1969": 2, "1970": 5, "1971": 2, "1972": 1, "1973": 3, "1974": 2, "1975": 2, "1976": 5, "1977": 3, "1978": 3, "1979": 6, "1980": 2, "1981": 1, "1983": 3, "1984": 2, "1986": 4, "1987": 1, "1988": 1, "1989": 2}}, "1930": {"exh": 1, "artists": 1, "fpct": 0, "topArtists": [["Bumpei Usui", 1]], "topNats": [], "yearData": {"1936": 1}}, "1940": {"exh": 4, "artists": 3, "fpct": 0, "topArtists": [["Toshio Matsumoto", 2], ["Utagawa Hiroshige", 1], ["KO, Japan", 1]], "topNats": [], "yearData": {"1941": 2, "1948": 1, "1949": 1}}, "1950": {"exh": 15, "artists": 60, "fpct": 3, "topArtists": [["Toshio Matsumoto", 4], ["Ishimoto Yasuhiro", 3], ["Kitaoji Rosanjin", 2], ["Osawa Gakyù", 2], ["Hiroshi Hamaya", 2]], "topNats": [], "yearData": {"1950": 2, "1951": 1, "1952": 1, "1953": 1, "1954": 4, "1955": 2, "1958": 2, "1959": 2}}, "1960": {"exh": 28, "artists": 58, "fpct": 3, "topArtists": [["Masuo Ikeda", 5], ["Tadasky (Tadasuke Kuwayama)", 4], ["Koyo Okada", 3], ["Hiroshi Hamaya", 3], ["Shoji Ueda", 3]], "topNats": [], "yearData": {"1960": 5, "1961": 2, "1962": 2, "1964": 4, "1965": 3, "1966": 4, "1967": 3, "1968": 3, "1969": 2}}, "1970": {"exh": 32, "artists": 61, "fpct": 17, "topArtists": [["Tadanori Yokoo", 6], ["Shigeko Kubota", 4], ["Akira Kurosaki", 2], ["Kazuko", 2], ["Ikko (Ikko Narahara)", 2]], "topNats": [], "yearData": {"1970": 5, "1971": 2, "1972": 1, "1973": 3, "1974": 2, "1975": 2, "1976": 5, "1977": 3, "1978": 3, "1979": 6}}, "1980": {"exh": 16, "artists": 62, "fpct": 16, "topArtists": [["Shomei Tomatsu", 3], ["Akihiko Tsukamoto", 3], ["Shigeko Kubota", 3], ["Mako Idemitsu", 3], ["Shoichi Ida", 2]], "topNats": [], "yearData": {"1980": 2, "1981": 1, "1983": 3, "1984": 2, "1986": 4, "1987": 1, "1988": 1, "1989": 2}}}, "Austrian": {"all": {"exh": 155, "artists": 61, "fpct": 3, "topArtists": [["Oskar Kokoschka", 67], ["Gustav Klimt", 26], ["Egon Schiele", 20], ["Alfred Kubin", 14], ["Arnulf Rainer", 11]], "topNats": [], "yearData": {"1931": 1, "1934": 5, "1936": 3, "1937": 1, "1938": 1, "1939": 2, "1940": 2, "1941": 3, "1942": 1, "1944": 3, "1945": 1, "1946": 3, "1947": 2, "1948": 2, "1949": 3, "1950": 3, "1951": 2, "1952": 1, "1953": 3, "1954": 3, "1955": 3, "1956": 2, "1957": 3, "1958": 2, "1959": 1, "1960": 5, "1961": 1, "1962": 2, "1963": 1, "1964": 3, "1965": 3, "1966": 5, "1967": 4, "1968": 4, "1969": 1, "1970": 5, "1971": 3, "1972": 4, "1973": 3, "1974": 2, "1975": 5, "1976": 4, "1977": 1, "1978": 4, "1979": 4, "1980": 4, "1981": 2, "1982": 1, "1983": 2, "1984": 5, "1985": 3, "1986": 5, "1987": 6, "1988": 5, "1989": 3}}, "1930": {"exh": 13, "artists": 16, "fpct": 5, "topArtists": [["Oskar Kokoschka", 6], ["Oskar Strnad", 1], ["Josef Hoffmann", 1], ["Thonet Brothers", 1], ["Mariette Lydis", 1]], "topNats": [], "yearData": {"1931": 1, "1934": 5, "1936": 3, "1937": 1, "1938": 1, "1939": 2}}, "1940": {"exh": 20, "artists": 10, "fpct": 0, "topArtists": [["Oskar Kokoschka", 12], ["Bohuslav Kokoschka", 2], ["Josef Hoffmann", 2], ["Weisgerber", 1], ["Thonet Brothers", 1]], "topNats": [], "yearData": {"1940": 2, "1941": 3, "1942": 1, "1944": 3, "1945": 1, "1946": 3, "1947": 2, "1948": 2, "1949": 3}}, "1950": {"exh": 23, "artists": 17, "fpct": 3, "topArtists": [["Oskar Kokoschka", 10], ["Josef Hoffmann", 4], ["Gustav Klimt", 4], ["Thonet Brothers", 3], ["Morris Zerner", 2]], "topNats": [], "yearData": {"1950": 3, "1951": 2, "1952": 1, "1953": 3, "1954": 3, "1955": 3, "1956": 2, "1957": 3, "1958": 2, "1959": 1}}, "1960": {"exh": 29, "artists": 20, "fpct": 5, "topArtists": [["Oskar Kokoschka", 11], ["Egon Schiele", 4], ["Wolfgang Paalen", 4], ["Gustav Klimt", 3], ["Alfred Kubin", 3]], "topNats": [], "yearData": {"1960": 5, "1961": 1, "1962": 2, "1963": 1, "1964": 3, "1965": 3, "1966": 5, "1967": 4, "1968": 4, "1969": 1}}, "1970": {"exh": 35, "artists": 24, "fpct": 4, "topArtists": [["Oskar Kokoschka", 16], ["Gustav Klimt", 9], ["Egon Schiele", 6], ["Alfred Kubin", 5], ["Hans Hollein", 4]], "topNats": [], "yearData": {"1970": 5, "1971": 3, "1972": 4, "1973": 3, "1974": 2, "1975": 5, "1976": 4, "1977": 1, "1978": 4, "1979": 4}}, "1980": {"exh": 36, "artists": 22, "fpct": 3, "topArtists": [["Oskar Kokoschka", 12], ["Arnulf Rainer", 10], ["Gustav Klimt", 9], ["Egon Schiele", 9], ["Günter Brus", 5]], "topNats": [], "yearData": {"1980": 4, "1981": 2, "1982": 1, "1983": 2, "1984": 5, "1985": 3, "1986": 5, "1987": 6, "1988": 5, "1989": 3}}}};
+
+const BUBBLE_ARTISTS = {
+  all: [['Picasso',234],['Matisse',185],['Miró',140],['Klee',135],['Léger',111],['Braque',105],['Johns',101]],
+  American: [['Jasper Johns',101],['Rauschenberg',98],['Ben Shahn',60],['Calder',55],['O\'Keeffe',48]],
+  French: [['Matisse',185],['Miró',140],['Léger',111],['Braque',105],['Chagall',96]],
+  German: [['Klee',135],['Ernst',94],['Beckmann',62],['Grosz',44],['Baumeister',38]],
+  British: [['Hepworth',52],['Moore',48],['Bacon',44],['Freud',38],['Hockney',36]],
+  Italian: [['de Chirico',58],['Morandi',44],['Burri',38],['Fontana',34],['Modigliani',32]],
+  Spanish: [['Picasso',234],['Miró',140],['Dalí',62],['Gris',44],['Tàpies',28]],
+  Mexican: [['Rivera',52],['Orozco',44],['Siqueiros',38],['Kahlo',28],['Tamayo',24]],
+  Dutch: [['van Gogh',91],['Mondrian',68],['de Kooning',58],['Appel',32],['Cobra',18]],
+  Swiss: [['Klee',135],['Giacometti',62],['Bill',38],['Tinguely',34],['Arp',28]],
+  Russian: [['Chagall',96],['Kandinsky',74],['Malevich',48],['Lissitzky',32],['Rodchenko',24]],
+  Japanese: [['Kusama',44],['Sugimoto',38],['Murakami',28],['Ono',22],['Araki',18]],
+  Austrian: [['Klimt',44],['Schiele',38],['Kokoschka',34],['Hundertwasser',22],['Hausner',16]]
+};
+
+let currentDecade = 'all';
+let timelineChart, donutChart, lineChart;
+
+function selectDecade(btn) {
+  document.querySelectorAll('.decade-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentDecade = btn.dataset.decade;
+  update();
+}
+
+function buildHeatmap(nat, decKey) {
+  const grid = document.getElementById('heatmap');
+  const nats = nat !== 'all' ? [nat] : HEATMAP_NATS;
+
+  let html = '<div class="hm-header"></div>';
+  HEATMAP_LABELS.forEach((l,i) => {
+    const dk = HEATMAP_DECADES[i];
+    const isActive = decKey !== 'all' && dk === decKey;
+    html += `<div class="hm-header" style="${isActive?'color:#351E28;font-weight:600':''}">${l}</div>`;
+  });
+
+  nats.forEach(n => {
+    const rowVals = HEATMAP_DECADES.map(dk => DATA[n] && DATA[n][dk] ? DATA[n][dk].exh : 0);
+    const globalMax = Math.max(...HEATMAP_NATS.map(nn => Math.max(...HEATMAP_DECADES.map(dk => DATA[nn]&&DATA[nn][dk]?DATA[nn][dk].exh:0))), 1);
+    html += `<div class="hm-label" title="${n}">${n.length > 8 ? n.slice(0,7)+'…' : n}</div>`;
+    rowVals.forEach((v, i) => {
+      const dk = HEATMAP_DECADES[i];
+      const intensity = v / globalMax;
+      const isActive = decKey !== 'all' && dk === decKey;
+      const alpha = 0.08 + intensity * 0.92;
+      const bg = `rgba(92,61,122,${alpha.toFixed(2)})`;
+      const border = isActive ? 'box-shadow:inset 0 0 0 2px #3D2452;' : '';
+      const title = `${n}, ${HEATMAP_LABELS[i]}: ${v} exhibitions`;
+      html += `<div class="hm-cell" style="background:${bg};${border}" title="${title}"></div>`;
+    });
+  });
+
+  grid.style.gridTemplateColumns = '64px repeat(6,1fr)';
+  grid.innerHTML = html;
+}
+
+function update() {
+  const nat = document.getElementById('nat-select').value;
+  const decKey = currentDecade;
+  const d = DATA[nat][decKey];
+
+  document.getElementById('nat-note').textContent = nat !== 'all' ? 'Showing ' + nat + ' artists only' : '';
+  document.getElementById('subtitle').innerHTML = CONTEXTS[decKey === 'all' ? 'all' : parseInt(decKey)];
+
+  document.getElementById('kpi-exh').textContent = d.exh.toLocaleString();
+  document.getElementById('kpi-exh-sub').textContent = decKey === 'all' ? 'total 1930–1989' : 'this decade';
+  document.getElementById('kpi-artists').textContent = d.artists.toLocaleString();
+  document.getElementById('kpi-artists-sub').textContent = nat !== 'all' ? nat + ' artists' : 'unique individuals';
+  document.getElementById('kpi-female').textContent = d.fpct + '%';
+  const yrs = Object.keys(d.yearData);
+  const totalExh = Object.values(d.yearData).reduce((a,b)=>a+b,0);
+  document.getElementById('kpi-avg').textContent = yrs.length ? Math.round(totalExh/yrs.length) : 0;
+
+  // Timeline
+  const years = Object.keys(d.yearData).map(Number).sort((a,b)=>a-b);
+  const values = years.map(y => d.yearData[y]);
+  const barColors = years.map(y => {
+    if (nat === 'all' && decKey === 'all') return DECADE_SHADES[Math.floor(y/10)*10] || '#C8C2BA';
+    return '#5C3D7A';
+  });
+  timelineChart.data.labels = years;
+  timelineChart.data.datasets[0].data = values;
+  timelineChart.data.datasets[0].backgroundColor = barColors;
+  document.getElementById('timeline-label').textContent = decKey === 'all'
+    ? (nat !== 'all' ? nat + ' exhibitions per year' : 'Exhibitions per year — click a decade to zoom in')
+    : (nat !== 'all' ? nat + ' exhibitions' : 'Exhibitions per year');
+  timelineChart.update('none');
+
+  // Donut
+  document.getElementById('donut-label').textContent = nat !== 'all' ? nat + ' by decade' : 'Nationality share';
+  if (nat !== 'all') {
+    const decadeKeys = ['1930','1940','1950','1960','1970','1980'];
+    donutChart.data.labels = HEATMAP_LABELS;
+    donutChart.data.datasets[0].data = decadeKeys.map(dk => DATA[nat][dk].exh);
+    donutChart.data.datasets[0].backgroundColor = ['#C4BFB8','#A8A49E','#DDD0E8','#B8A0CC','#5C3D7A','#3D2452'];
+  } else {
+    const nats = d.topNats || DATA.all.all.topNats;
+    const top6 = nats.slice(0,6);
+    donutChart.data.labels = top6.map(([n])=>n);
+    donutChart.data.datasets[0].data = top6.map(([,c])=>c);
+    donutChart.data.datasets[0].backgroundColor = NAT_COLORS;
+  }
+  donutChart.update('none');
+
+  // Bubble — custom HTML layout filling full space
+  const bubbleData = BUBBLE_ARTISTS[nat] || BUBBLE_ARTISTS.all;
+  const maxCount = Math.max(...bubbleData.map(([,c])=>c));
+  const bubbleColors = ['rgba(92,61,122,0.95)','rgba(92,61,122,0.78)','rgba(92,61,122,0.62)','rgba(92,61,122,0.48)','rgba(122,120,112,0.65)','rgba(122,120,112,0.45)','rgba(122,120,112,0.28)'];
+  const wrap = document.getElementById('bubbleWrap');
+  const W = wrap.offsetWidth || 188;
+  const H = wrap.offsetHeight || 160;
+  const positions = [
+    {cx:0.18,cy:0.22},{cx:0.72,cy:0.18},{cx:0.42,cy:0.52},
+    {cx:0.15,cy:0.72},{cx:0.78,cy:0.62},{cx:0.50,cy:0.85},{cx:0.88,cy:0.35}
+  ];
+  wrap.innerHTML = bubbleData.map(([name,count],i) => {
+    const r = Math.max(18, Math.round((count/maxCount)*52));
+    const pos = positions[i] || {cx:0.5,cy:0.5};
+    const left = Math.round(pos.cx * W - r);
+    const top = Math.round(pos.cy * H - r);
+    const size = r * 2;
+    const fs = Math.max(8, Math.round(r * 0.28));
+    const shortName = name.split(' ').pop();
+    return `<div title="${name}: ${count} shows" style="position:absolute;left:${left}px;top:${top}px;width:${size}px;height:${size}px;border-radius:50%;background:${bubbleColors[i]};display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:default;">
+      <span style="font-size:${fs}px;font-weight:600;color:#F5F0E8;line-height:1.1;text-align:center;padding:0 3px;overflow:hidden;max-width:${size-6}px;white-space:nowrap;text-overflow:ellipsis;">${shortName}</span>
+      <span style="font-size:${Math.max(7,fs-2)}px;color:rgba(245,240,232,0.75);line-height:1;">${count}</span>
+    </div>`;
+  }).join('');
+
+
+  // Line
+  const womenVals = WOMEN_DATA[nat] || WOMEN_DATA.all;
+  const di = ['1930','1940','1950','1960','1970','1980'].indexOf(decKey);
+  womenChart.data.datasets[0].data = womenVals;
+  womenChart.data.datasets[0].pointBackgroundColor = womenVals.map((_,i) =>
+    decKey === 'all' || i === di ? '#FF5C34' : '#C8C2BA');
+  womenChart.data.datasets[0].pointRadius = womenVals.map((_,i) =>
+    decKey === 'all' ? 4 : i === di ? 6 : 2);
+  womenChart.update('none');
+
+  // Heatmap
+  buildHeatmap(nat, decKey);
+}
+
+// Init charts
+const tlCtx = document.getElementById('timelineChart').getContext('2d');
+timelineChart = new Chart(tlCtx, {
+  type:'bar',
+  data:{labels:[],datasets:[{data:[],backgroundColor:[],borderWidth:0,borderRadius:2}]},
+  options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:250},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#D8D2C8',borderWidth:1,titleColor:'#2C2C2A',bodyColor:'#7A7870',callbacks:{label:ctx=>ctx.raw+' exhibitions'}}},
+    scales:{
+      x:{ticks:{font:{size:9,family:'Helvetica Neue'},color:'#7A7870',maxRotation:0,autoSkip:true,maxTicksLimit:18},grid:{display:false},border:{color:'#D8D2C8'}},
+      y:{ticks:{font:{size:9,family:'Helvetica Neue'},color:'#7A7870'},grid:{color:'#EAE6DE'},border:{display:false}}
+    }
+  }
+});
+
+const dCtx = document.getElementById('donutChart').getContext('2d');
+donutChart = new Chart(dCtx, {
+  type:'doughnut',
+  data:{labels:[],datasets:[{data:[],backgroundColor:NAT_COLORS,borderWidth:0}]},
+  options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:250},cutout:'58%',
+    plugins:{
+      legend:{position:'right',labels:{font:{size:9,family:'Helvetica Neue'},color:'#7A736B',padding:5,boxWidth:7,boxHeight:7}},
+      tooltip:{backgroundColor:'#fff',borderColor:'#D8D2C8',borderWidth:1,titleColor:'#2C2C2A',bodyColor:'#7A7870'}
+    }
+  }
+});
+
+
+
+const lCtx = document.getElementById('lineChart').getContext('2d');
+const womenChart = new Chart(lCtx, {
+  type:'line',
+  data:{
+    labels:['1930s','1940s','1950s','1960s','1970s','1980s'],
+    datasets:[{data:[],borderColor:'#FF5C34',borderWidth:2,pointBackgroundColor:'#FF5C34',pointRadius:4,tension:0.4,fill:true,backgroundColor:'rgba(255,92,52,0.07)'}]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:250},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#D8D2C8',borderWidth:1,titleColor:'#2C2C2A',bodyColor:'#7A7870',callbacks:{label:ctx=>ctx.raw+'% women'}}},
+    scales:{
+      x:{ticks:{font:{size:9,family:'Helvetica Neue'},color:'#7A7870'},grid:{display:false},border:{color:'#D8D2C8'}},
+      y:{ticks:{font:{size:9,family:'Helvetica Neue'},color:'#7A7870',callback:v=>v+'%'},grid:{color:'#EAE6DE'},border:{display:false},min:0,max:18}
+    }
+  }
+});
+
+update();
+</script>
+</body>
+</html>
